@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+const BASEPRICE = 40000
+const BASELENGTH = 50
+const PERKILO = 600
+
 type Graph struct {
 	Edges  []*Edge
 	Nodes  []*Node
@@ -261,11 +265,11 @@ func (g *Graph) ShortestPath(costTable *CostTable, destCity string, passengers [
 				StartTime:   costTable.Table[costTable.Table[dest].Previous].Arrival,
 				Destination: dest.Name,
 				ArrivalTime: costTable.Table[dest].Arrival,
-				Children:    len(passengers) - adults,
-				Adults:      adults,
-				Cars:        cars,
-				Price:       PriceCalculator(costTable.Table[dest].Length, cars),
 			},
+			Children:    len(passengers) - adults,
+			Adults:      adults,
+			Cars:        cars,
+			Price:       PriceCalculator(costTable.Table[dest].Length, cars),
 		}
 
 		dest = costTable.Table[dest].Previous
@@ -290,9 +294,13 @@ func CarsCalculator(passengers []int) (int, int) {
 }
 
 func PriceCalculator(length int, cars int) int {
-	price := 40000 * cars
+	price := BASEPRICE * cars
 
-	price += (length - 50) * 600 * cars
+	if length < BASELENGTH{
+		return price
+	}
+
+	price += (length - BASELENGTH) * PERKILO * cars
 
 	return price
 }

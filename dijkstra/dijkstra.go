@@ -2,15 +2,16 @@ package dijkstra
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"sotoon/model"
 	"time"
 )
 
 type Graph struct {
-	Edges     []*Edge
-	Nodes     []*Node
-	Cities    map[string]*Node
+	Edges  []*Edge
+	Nodes  []*Node
+	Cities map[string]*Node
 }
 
 func NewGraph(data model.Roads) *Graph {
@@ -45,6 +46,7 @@ type CostPrevious struct {
 	Previous *Node
 	Path     string
 	Arrival  time.Time
+	Length   int
 }
 
 type CostTable struct {
@@ -154,6 +156,7 @@ func (g *Graph) Dijkstra(startCity string, startTime time.Time) *CostTable {
 				table[edge.Child].Previous = edge.Parent
 				table[edge.Child].Path = edge.RoadName
 				table[edge.Child].Arrival = table[edge.Child].Arrival.Add(time.Duration(distanceToNeighbor*3600) * time.Second)
+				table[edge.Child].Length = edge.Length
 			}
 		}
 	}
@@ -239,16 +242,18 @@ func getClosestNonVisitedNode(costTable map[*Node]*CostPrevious, visited []*Node
 	return sorted[0].Node
 }
 
-func (g *Graph) ShortestPath(costTable *CostTable, destCity string) model.ShortestPath {
+func (g *Graph) ShortestPath(costTable *CostTable, destCity string, passengers []int) model.ShortestPath {
 	dest := g.Cities[destCity]
 
 	s := model.ShortestPath{
 		BestPath:    make([]model.Path, 0),
 		StartTime:   costTable.StartTime,
 		ArrivalTime: costTable.Table[dest].Arrival,
+		Passengers:  passengers,
 	}
 
 	for dest != costTable.StartNode {
+		adults, cars := CarsCalculator(passengers)
 		p := model.Path{
 			Reference: costTable.Table[dest].Path,
 			Route: model.Edge{
@@ -256,6 +261,10 @@ func (g *Graph) ShortestPath(costTable *CostTable, destCity string) model.Shorte
 				StartTime:   costTable.Table[costTable.Table[dest].Previous].Arrival,
 				Destination: dest.Name,
 				ArrivalTime: costTable.Table[dest].Arrival,
+				Children:    len(passengers) - adults,
+				Adults:      adults,
+				Cars:        cars,
+				Price:       PriceCalculator(costTable.Table[dest].Length, cars),
 			},
 		}
 
@@ -265,4 +274,25 @@ func (g *Graph) ShortestPath(costTable *CostTable, destCity string) model.Shorte
 	}
 
 	return s
+}
+
+func CarsCalculator(passengers []int) (int, int) {
+	adults := 0
+	for _, passenger := range passengers {
+		if passenger > 2 {
+			adults++
+		}
+	}
+
+	cars := int(math.Ceil(float64(adults) / float64(4)))
+
+	return adults, cars
+}
+
+func PriceCalculator(length int, cars int) int {
+	price := 40000 * cars
+
+	price += (length - 50) * 600 * cars
+
+	return price
 }

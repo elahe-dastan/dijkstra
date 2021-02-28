@@ -11,14 +11,16 @@ import (
 func main() {
 	data := model.NewRoads("roads.json")
 
-	t, err := time.Parse(time.Kitchen, "8:00AM")
+	graph := dijkstra.NewGraph(data)
+
+	travel := model.NewTravel("input.json")
+
+	t, err := time.Parse(time.Kitchen, travel.DepartureTime)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	graph := dijkstra.NewGraph(data)
-
-	costTable := graph.Dijkstra("TEHRAN", t)
-	bestPath := graph.ShortestPath(costTable, "RAMSAR")
+	costTable := graph.Dijkstra(travel.Source, t)
+	bestPath := graph.ShortestPath(costTable, travel.Destination, travel.Passengers)
 	fmt.Println(bestPath)
 }

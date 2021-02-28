@@ -1,0 +1,6 @@
+{
+  "source": "TEHRAN",
+  "destination": "RAMSAR",
+  "departure_time": "08:00PM",
+  "passengers" : [20, 22, 34, 11, 1, 17]
+}
